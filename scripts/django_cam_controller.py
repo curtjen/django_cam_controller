@@ -2,11 +2,16 @@ import os, re, subprocess
 
 user_dir = os.path.expanduser('~')
 
-def capture_image():
-    os.system("gphoto2 --set-config capturetarget=1 --capture-image")
-    print "image captured"
+def capture_image(image_dir):
+    filename = "%s/%s/%s" % (user_dir, image_dir, "%:")
+    print filename
+    
+    capture_image = subprocess.Popen(['gphoto2', '--capture-image-and-download', '--filename', filename, '--keep'], stdout=subprocess.PIPE)
+    capture_result = capture_image.stdout.read()
 
     os.system("gphoto2 --summary")
+
+    return capture_result
     
 def get_pid():
     p1 = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
@@ -15,17 +20,29 @@ def get_pid():
     print process
     
     pid = re.search( '\npi\s+(\d+).+gphoto2 --spawner.+', process, re.M )
-    
+
+    message = ''
+
     if pid:
         os.system('kill -9 %s' % pid.group(1))
         os.system('ps aux | grep -i "gphoto"')
-        print "Camera unmounted and ready to use."
+        message = "Camera unmounted and ready to use."
     else:
         print "Nothing to unmount."
 
-def capture_interval(sec):
+        message = "Nothing to unmount."
+
+    return message
+
+def capture_interval(frames ,sec):
     if (sec):
-        os.system("gphoto2 --capture-image --interval %s" % sec)
-        print "Capturing at interval of %s" % sec
+        os.system("gphoto2 --capture-image -F %s --interval %s" % (frames, sec))
+        
+        message = "Capturing at interval of %s for %s frames." % (sec, frames)
+        print message
     else:
-        print "No interval set. Please set an interval (in seconds)."
+        message = "No interval set. Please set an interval (in seconds)."
+        print message
+
+    return message
+
